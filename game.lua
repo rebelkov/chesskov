@@ -6,6 +6,25 @@ display.setStatusBar( display.HiddenStatusBar )
 print ("Width "..display.contentWidth)
 print ("Height "..display.contentHeight)
 
+
+local pieceTable={ 
+		width = 36,
+		height = 36, 
+		numFrames = 14, 
+		sheetContentHeight = 76, 
+		sheetContentWidth = 252
+	}
+
+	local pieceSheet=graphics.newImageSheet( "images/Chess_Pieces1.png", pieceTable )
+local imgPiece={}
+local size_x = 75
+local size_y = 75
+local poscenter=(display.contentHeight- 8*size_y)/2
+local posxcenter=(display.contentWidth - 8*size_x)/4
+local statutSelectionSource=true
+local choixSource=""
+local choixCible=""
+	
 local blanc_en_bas = true
 local posLettre={"a","b","c","d","e","f","g","h"}
 
@@ -3029,7 +3048,7 @@ end
 	  local i = 0;
 	  local s = "";
 	  local ch = "";
-
+	  local numImage= 0;
 	  for i=0,7,1 do
 	    BB[1+i] = {};	-- create object
 	  end
@@ -3043,6 +3062,37 @@ end
 	      ch = iif((Js_color[1+i]==Js_black ) , Js_lowerNot[1+ Js_board[1+i] ] , Js_upperNot[1+ Js_board[1+i] ] );
 	    end
 	    BB[1+iLine][1+iCol] = ch;
+
+	    if (ch~=imgPiece[i+1].codePiece) then
+	    	imgPiece[i+1]:removeSelf()
+	    	imgPiece[i+1] = nil
+
+	    	local chminus=string.lower(ch)
+
+	    	if (chminus==".") then numImage=7
+	    		elseif (chminus=="p") then numImage=6
+	    		elseif (chminus=="r") then numImage=5
+	    		elseif (chminus=="n") then numImage=4
+	    		elseif (chminus=="b") then numImage=3
+	    		elseif (chminus=="q") then numImage=2
+	    		elseif (chminus=="k") then numImage=1
+
+
+	    	end
+
+	    	
+
+			numImage = iif((Js_color[1+i]==Js_black ) , numImage+7 ,numImage );
+
+
+	    	imgPiece[i+1] = display.newImageRect(pieceSheet,numImage,70,70)
+	    	imgPiece[i+1].x = size_x*(iCol + 1) + posxcenter
+	    	imgPiece[i+1].y = size_y*(iLine + 1) + poscenter
+	    	imgPiece[i+1].codePiece=ch
+
+           
+	    end
+
 	  end
 
 	  for iLine=7,0,-1 do
@@ -4616,14 +4666,35 @@ function selectcase( event)
 	if event.phase== 'began' then
 
 	print ("select case "..event.target.position)
-	if (event.target.select == false) then
-	event.target.strokeWidth=10
-	event.target:setStrokeColor(1,1,0)
-	event.target.select=true
-else 
-	event.target.strokeWidth=0
-	event.target:setStrokeColor(0,0,0)
-	event.target.select=false
+	if (event.target.source == false) then
+		event.target.strokeWidth=10
+		event.target:setStrokeColor(1,1,0)
+		event.target.source=true
+		
+		--choix du cible
+		if (statutSelectionSource) then 
+				choixSource=event.target.position
+			else 
+				choixCible=event.target.position
+				EnterMove(choixSource,choixCible,"");
+				UpdateDisplay();
+				Jst_Play();
+				choixCible=""
+				choixSource=""
+
+		end
+
+		--chgt de status de la selection source <-> cible	
+		statutSelectionSource=not(statutSelectionSource)
+	
+
+
+	else 
+		event.target.strokeWidth=0
+		event.target:setStrokeColor(0,0,0)
+		event.target.source=false
+		statutSelectionSource=true
+		choixSource=""
 	end
 
 	elseif (event.phase == "ended" or event.phase == "cancelled") then
@@ -4633,17 +4704,13 @@ end
 	
 
 local blocs = display.newGroup()
+ 
 
 function scene:create( event )
 	local sceneGroup = self.view
 	local W_LEN=20
-	local size_x
-	local size_y
-	size_x=75
-	size_y=75
+	
 	blocs:toFront()
-	local poscenter=(display.contentHeight- 8*size_y)/2
-	local posxcenter=(display.contentWidth - 8*size_x)/4
 	
 	local lettre="a"
 	for i=0,7,1 do
@@ -4652,21 +4719,21 @@ function scene:create( event )
 			 local casedamier=display.newRect(120,220,75,75)
 			 casedamier.x = size_x*(j +1) + posxcenter
              casedamier.y = size_y*(i+1) + poscenter
-            casedamier.select=false
-           
+            casedamier.source=false
+            casedamier.cible=false
            
              --casedamier.position=Js_szAlgMvt[num]
              if (blanc_en_bas) then
+             	casedamier.position=posLettre[j+1]..i+1
              	
-             	casedamier.position=posLettre[j+1]..8-i
-             else casedamier.position=posLettre[j+1]..i+1
+             else casedamier.position=posLettre[j+1]..8-i
              end
              casedamier:setFillColor(1,193/255,132/255)
              if (j+i) % 2 == 0  then
 
              		casedamier:setFillColor(153/255,13/255,13/255)
              end
- casedamier:addEventListener( "touch", selectcase )  
+ 			casedamier:addEventListener( "touch", selectcase )  
 
              blocs.insert(blocs, casedamier)
 		end
@@ -4675,9 +4742,17 @@ function scene:create( event )
    sceneGroup:insert(blocs)
 
 
+   for i=1,64,1 do
+   	imgPiece[i]=display.newImageRect(pieceSheet,7,70,70)
+   	imgPiece[i].codePiece="."
+   end
+
+  
+
+
    InitGame();		-- Also to start a new game again
 
-	print("This is pure lua chess engine.");
+	
 
 
 	UpdateDisplay();
@@ -4686,10 +4761,10 @@ function scene:create( event )
 	--autosample2();
 	--autosample3();
 	--autosample4();
-EnterMove("e2","e4","");
-   --Jst_Play();	
+-- EnterMove("e2","e4","");
+--    Jst_Play();	
   -- EnterMove("e4","f5","");
-   MessageOut(GetFen(),true);
+   --MessageOut(GetFen(),true);
 end
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
