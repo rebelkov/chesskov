@@ -1566,7 +1566,7 @@ end
 	    if (iop == 1) then
 	      return 1;
 	    end
-	    UpdateDisplay();
+	    --UpdateDisplay();
 
 	    Js_fEat = (bitwises.band(xnode.flags, Js_capture) ~= 0);
 	    if ((Js_board[1+xnode.t] == Js_pawn) or (bitwises.band(xnode.flags, Js_capture) ~= 0) or
@@ -3064,6 +3064,9 @@ end
 	    BB[1+iLine][1+iCol] = ch;
 
 	    if (ch~=imgPiece[i+1].codePiece) then
+	    	print ("changement piece "..ch)
+	    	print ("num "..i+1)
+	    	print ('icol '..iCol..' '..iLine)
 	    	imgPiece[i+1]:removeSelf()
 	    	imgPiece[i+1] = nil
 
@@ -3082,13 +3085,26 @@ end
 
 	    	
 
-			numImage = iif((Js_color[1+i]==Js_black ) , numImage+7 ,numImage );
+			numImage = iif((Js_color[1+i]==Js_black ) , numImage +7 ,numImage );
 
+			--cas ou joueur est blanc
+			
 
 	    	imgPiece[i+1] = display.newImageRect(pieceSheet,numImage,70,70)
 	    	imgPiece[i+1].x = size_x*(iCol + 1) + posxcenter
-	    	imgPiece[i+1].y = size_y*(iLine + 1) + poscenter
+	    	imgPiece[i+1].player = iif((Js_color[1+i]==Js_black ) , false , true );
+
+	    	if (blanc_en_bas) then
+	    	 	imgPiece[i+1].y = 672 - size_y*(iLine + 1) + poscenter
+	    	 	imgPiece[i+1].position=posLettre[iCol+1]..iLine+1 
+	    	else
+				imgPiece[i+1].y = size_y*(iLine + 1) + poscenter	
+				imgPiece[i+1].position=posLettre[iCol+1]..8-iLine   		
+	    	end
 	    	imgPiece[i+1].codePiece=ch
+
+	    	imgPiece[i+1]:addEventListener("touch",selectPiece)
+	    	--print ("piece "..ch.." "..imgPiece[i+1].position)
 
            
 	    end
@@ -4380,7 +4396,7 @@ end
 	  if (iMvt ~= 0) then
 
 	    WatchPosit();
-	    UpdateDisplay();
+	    --UpdateDisplay();
 	    IfCheck();
 	    if (not CheckMatrl()) then
 	      Js_bDraw = 1;
@@ -4566,7 +4582,7 @@ end
 	end
 
 	function Jst_Play()
-
+		print(" ordinateur cherche coup ...")
 	  SwitchSides( false );
 
 	  Js_fEat = false;
@@ -4577,6 +4593,7 @@ end
 	  Js_realBestMove = 0;
 
 	  ComputerMvt();
+	  print ("coup trouve ! ")
 
 	  UpdateDisplay();
 	end
@@ -4658,29 +4675,69 @@ end
 	  MessageOut(GetFen(),true);
 	end
 
+local coupOrdi=false
+local caseSource
 
+
+--deplacmene piece joueur
+
+function selectPiece(event)
+
+	if event.phase== 'began' and event.target.player==true then
+		print ('piece '..event.target.position)
+
+	elseif event.phase=="moved" and event.target.player==true then
+		
+		event.target.x=event.x
+		event.target.y=event.y
+
+	elseif (event.phase=="ended" or event.phase=="cancelled") and event.target.player==true then
+			--recherhe case damier correspondant 
+			print ("i "..(event.x - posxcenter)/size_x )
+            print ("j "..(event.y -poscenter)/size_y )
+			--repositionnement milieu case
+
+			--entree position
+
+			--recherche computer
+
+
+	end
+
+end
 	
 function selectcase( event)
 
 
 	if event.phase== 'began' then
 
-	print ("select case "..event.target.position)
+		print ("select case "..event.target.position)
+		--identifie si case non vide
+
+
+
 	if (event.target.source == false) then
 		event.target.strokeWidth=10
 		event.target:setStrokeColor(1,1,0)
 		event.target.source=true
 		
+		
 		--choix du cible
 		if (statutSelectionSource) then 
 				choixSource=event.target.position
+				caseSource=event.target
 			else 
 				choixCible=event.target.position
 				EnterMove(choixSource,choixCible,"");
-				UpdateDisplay();
-				Jst_Play();
+				-- UpdateDisplay();
+				caseSource.strokeWidth=0
+				caseSource:setStrokeColor(0,0,0)
+				event.target.strokeWidth=0
+				event.target:setStrokeColor(0,0,0)
 				choixCible=""
 				choixSource=""
+				coupOrdi=true;
+
 
 		end
 
@@ -4696,8 +4753,15 @@ function selectcase( event)
 		statutSelectionSource=true
 		choixSource=""
 	end
+	-- display.getCurrentStage():setFocus(event.target)
+	-- elseif (event.phase == "move" then
 
-	elseif (event.phase == "ended" or event.phase == "cancelled") then
+
+	elseif (event.phase == "ended" and coupOrdi==true) then
+
+UpdateDisplay();
+	     Jst_Play();
+	     coupOrdi=false;
 
 	end
 end
@@ -4724,16 +4788,17 @@ function scene:create( event )
            
              --casedamier.position=Js_szAlgMvt[num]
              if (blanc_en_bas) then
-             	casedamier.position=posLettre[j+1]..i+1
+             	casedamier.position=posLettre[j+1]..8-i
              	
-             else casedamier.position=posLettre[j+1]..8-i
+             else casedamier.position=posLettre[j+1]..i+1
+
              end
              casedamier:setFillColor(1,193/255,132/255)
              if (j+i) % 2 == 0  then
 
              		casedamier:setFillColor(153/255,13/255,13/255)
              end
- 			casedamier:addEventListener( "touch", selectcase )  
+ 			--casedamier:addEventListener( "touch", selectcase )  
 
              blocs.insert(blocs, casedamier)
 		end
@@ -4745,6 +4810,9 @@ function scene:create( event )
    for i=1,64,1 do
    	imgPiece[i]=display.newImageRect(pieceSheet,7,70,70)
    	imgPiece[i].codePiece="."
+   	imgPiece[i].position=""
+   	imgPiece[i].player=false
+   	imgPiece[i]:addEventListener("touch",selectPiece)
    end
 
   
