@@ -1,4 +1,4 @@
-	
+
 local composer = require( "composer" )
 
 local scene = composer.newScene()
@@ -19,6 +19,8 @@ local pieceTable={
 local imgPiece={}
 local size_x = 75
 local size_y = 75
+local start_x 
+local start_y
 local poscenter=(display.contentHeight- 8*size_y)/2
 local posxcenter=(display.contentWidth - 8*size_x)/4
 local statutSelectionSource=true
@@ -3102,6 +3104,7 @@ end
 				imgPiece[i+1].position=posLettre[iCol+1]..8-iLine   		
 	    	end
 	    	imgPiece[i+1].codePiece=ch
+	    	imgPiece[i+1].moveAvailibity=false
 
 	    	imgPiece[i+1]:addEventListener("touch",selectPiece)
 	    	--print ("piece "..ch.." "..imgPiece[i+1].position)
@@ -4408,9 +4411,9 @@ end
 	    Js_depth_Seek = 0;
 
 	else 
-		print ('mouvement invalide')
+		return 1
 	  end
-
+	  return 0
 	end
 
 	-- ignores flags...
@@ -4679,28 +4682,81 @@ local coupOrdi=false
 local caseSource
 
 
+
 --deplacmene piece joueur
 
 function selectPiece(event)
 
+	local pos_i
+	local pos_j
 	if event.phase== 'began' and event.target.player==true then
 		print ('piece '..event.target.position)
+		event.target.moveAvailibity=true
+		start_x=event.x
+		start_y=event.y
 
-	elseif event.phase=="moved" and event.target.player==true then
+	elseif event.phase=="moved" and event.target.moveAvailibity==true then
 		
 		event.target.x=event.x
 		event.target.y=event.y
 
-	elseif (event.phase=="ended" or event.phase=="cancelled") and event.target.player==true then
+	elseif (event.phase=="ended" or event.phase=="cancelled")  then
+
+			--on realche sur case adverse occupe
+			if event.target.moveAvailibity==false then
+				event.target:removeSelf()
+
+			end
 			--recherhe case damier correspondant 
-			print ("i "..(event.x - posxcenter)/size_x )
-            print ("j "..(event.y -poscenter)/size_y )
-			--repositionnement milieu case
+			if event.target.moveAvailibity==true then
 
-			--entree position
+				pos_i=math.round((event.x - posxcenter)/size_x )  
+				pos_j=8-math.round((event.y -poscenter)/size_y ) + 1
+				print("new position "..pos_i.." "..pos_j)
+				local pos_start=event.target.position
+				event.target.position=posLettre[pos_i]..pos_j
+				local new_y=672 - size_y*(pos_j) + poscenter
+				local new_x=size_x*pos_i + posxcenter
+				--check movement autorise
 
-			--recherche computer
+				
+				--nettoie case cible (cas de prise)
 
+				
+
+
+				
+	   -- if (blanc_en_bas) then
+		  --   	 	imgPiece[i+1].y = 672 - size_y*(iLine + 1) + poscenter
+		  --   	 	imgPiece[i+1].position=posLettre[iCol+1]..iLine+1 
+		  --   	else
+				-- 	imgPiece[i+1].y = size_y*(iLine + 1) + poscenter	
+				-- 	imgPiece[i+1].position=posLettre[iCol+1]..8-iLine   		
+		  --   	end
+
+		    	print (" deplcement "..pos_start.." to "..event.target.position)
+				
+
+				--entree position
+				local chk=EnterMove(pos_start,event.target.position,"")
+				print ('retour chl '..chk)
+
+				--repositionnement milieu case
+				--positionnnement de la piece
+				if (chk==0) then
+					event.target.y=new_y
+					event.target.x=new_x
+					--recherche computer
+				else
+				--ERROR deplacement
+				-- init Case
+				print ("ERROR DEPLACEMENT")
+					event.target.y=start_y
+					event.target.x=start_x
+					
+
+				end
+		end
 
 	end
 
@@ -4812,6 +4868,7 @@ function scene:create( event )
    	imgPiece[i].codePiece="."
    	imgPiece[i].position=""
    	imgPiece[i].player=false
+
    	imgPiece[i]:addEventListener("touch",selectPiece)
    end
 
