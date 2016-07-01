@@ -26,7 +26,7 @@ local posxcenter=(display.contentWidth - 8*size_x)/4
 local statutSelectionSource=true
 local choixSource=""
 local choixCible=""
-	
+local AtoiDeJouer=true
 local blanc_en_bas = true
 local posLettre={"a","b","c","d","e","f","g","h"}
 
@@ -658,9 +658,7 @@ end
 	 Js_raw7 = { 6, 1, 0 };
 	 Js_heavy = { false, false, false, true, true, true, false, false };
 
-	 Js_AUTHOR = "Copyright © 1998-2002 - Stephane N.B. Nguyen - Vaureal, FRANCE";
-	 Js_WEBSITE = "http://www.ludochess.com/";
-	 Js_STR_COPY = "JESTER 1.10e by "..Js_AUTHOR..Js_WEBSITE;
+	
 
 
 
@@ -1717,9 +1715,9 @@ end
 	    s = s..copyValueOf(Js_tmpCh).." ";
 	    i = i + 1;
 	  end
-	  --MessageOut("Thinking: "..s , true);
+	  MessageOut("Thinking: "..s , true);
 
-	  --ShowScore(score4);
+	  ShowScore(score4);
 	end
 
 
@@ -3066,9 +3064,9 @@ end
 	    BB[1+iLine][1+iCol] = ch;
 
 	    if (ch~=imgPiece[i+1].codePiece) then
-	    	print ("changement piece "..ch)
-	    	print ("num "..i+1)
-	    	print ('icol '..iCol..' '..iLine)
+	    	-- print ("changement piece "..ch)
+	    	-- print ("num "..i+1)
+	    	-- print ('icol '..iCol..' '..iLine)
 	    	imgPiece[i+1]:removeSelf()
 	    	imgPiece[i+1] = nil
 
@@ -3114,13 +3112,13 @@ end
 
 	  end
 
-	  for iLine=7,0,-1 do
-	   s = "";
-	   for iCol=0,7,1 do
-	     s = s..BB[1+iLine][1+iCol];
-	   end
-	   print(s);
-	  end
+	  -- for iLine=7,0,-1 do
+	  --  s = "";
+	  --  for iCol=0,7,1 do
+	  --    s = s..BB[1+iLine][1+iCol];
+	  --  end
+	  --  print(s);
+	  -- end
 
 	end
 
@@ -4682,7 +4680,10 @@ local coupOrdi=false
 local caseSource
 
 
-
+local function listener1( obj )
+    --print( "Transition 1 completed on object: " .. tostring( obj ) )
+    Jst_Play()
+end
 --deplacmene piece joueur
 
 function selectPiece(event)
@@ -4717,26 +4718,9 @@ function selectPiece(event)
 				event.target.position=posLettre[pos_i]..pos_j
 				local new_y=672 - size_y*(pos_j) + poscenter
 				local new_x=size_x*pos_i + posxcenter
-				--check movement autorise
-
 				
-				--nettoie case cible (cas de prise)
-
-				
-
-
-				
-	   -- if (blanc_en_bas) then
-		  --   	 	imgPiece[i+1].y = 672 - size_y*(iLine + 1) + poscenter
-		  --   	 	imgPiece[i+1].position=posLettre[iCol+1]..iLine+1 
-		  --   	else
-				-- 	imgPiece[i+1].y = size_y*(iLine + 1) + poscenter	
-				-- 	imgPiece[i+1].position=posLettre[iCol+1]..8-iLine   		
-		  --   	end
-
-		    	print (" deplcement "..pos_start.." to "..event.target.position)
-				
-
+				print (" deplcement "..pos_start.." to "..event.target.position)
+			
 				--entree position
 				local chk=EnterMove(pos_start,event.target.position,"")
 				print ('retour chl '..chk)
@@ -4744,15 +4728,15 @@ function selectPiece(event)
 				--repositionnement milieu case
 				--positionnnement de la piece
 				if (chk==0) then
-					event.target.y=new_y
-					event.target.x=new_x
-					--recherche computer
+					transition.to(event.target,{x=new_x,y=new_y,onComplete=listener1})
+				
 				else
 				--ERROR deplacement
 				-- init Case
 				print ("ERROR DEPLACEMENT")
 					event.target.y=start_y
 					event.target.x=start_x
+					event.target.position=pos_start
 					
 
 				end
@@ -4761,66 +4745,77 @@ function selectPiece(event)
 	end
 
 end
+
+
+-- local function handleComputer( event )
+-- 	--print ('ok')
+--     -- if ( AtoiDeJouer == false ) then
+--     -- 	print("event ")
+--     --      Jst_Play()
+--     --      AtoiDeJouer=true
+--     -- end
+-- end
+
 	
-function selectcase( event)
+-- function selectcase( event)
 
 
-	if event.phase== 'began' then
+-- 	if event.phase== 'began' then
 
-		print ("select case "..event.target.position)
-		--identifie si case non vide
+-- 		print ("select case "..event.target.position)
+-- 		--identifie si case non vide
 
 
 
-	if (event.target.source == false) then
-		event.target.strokeWidth=10
-		event.target:setStrokeColor(1,1,0)
-		event.target.source=true
+-- 	if (event.target.source == false) then
+-- 		event.target.strokeWidth=10
+-- 		event.target:setStrokeColor(1,1,0)
+-- 		event.target.source=true
 		
 		
-		--choix du cible
-		if (statutSelectionSource) then 
-				choixSource=event.target.position
-				caseSource=event.target
-			else 
-				choixCible=event.target.position
-				EnterMove(choixSource,choixCible,"");
-				-- UpdateDisplay();
-				caseSource.strokeWidth=0
-				caseSource:setStrokeColor(0,0,0)
-				event.target.strokeWidth=0
-				event.target:setStrokeColor(0,0,0)
-				choixCible=""
-				choixSource=""
-				coupOrdi=true;
+-- 		--choix du cible
+-- 		if (statutSelectionSource) then 
+-- 				choixSource=event.target.position
+-- 				caseSource=event.target
+-- 			else 
+-- 				choixCible=event.target.position
+-- 				EnterMove(choixSource,choixCible,"");
+-- 				-- UpdateDisplay();
+-- 				caseSource.strokeWidth=0
+-- 				caseSource:setStrokeColor(0,0,0)
+-- 				event.target.strokeWidth=0
+-- 				event.target:setStrokeColor(0,0,0)
+-- 				choixCible=""
+-- 				choixSource=""
+-- 				coupOrdi=true;
 
 
-		end
+-- 		end
 
-		--chgt de status de la selection source <-> cible	
-		statutSelectionSource=not(statutSelectionSource)
+-- 		--chgt de status de la selection source <-> cible	
+-- 		statutSelectionSource=not(statutSelectionSource)
 	
 
 
-	else 
-		event.target.strokeWidth=0
-		event.target:setStrokeColor(0,0,0)
-		event.target.source=false
-		statutSelectionSource=true
-		choixSource=""
-	end
-	-- display.getCurrentStage():setFocus(event.target)
-	-- elseif (event.phase == "move" then
+-- 	else 
+-- 		event.target.strokeWidth=0
+-- 		event.target:setStrokeColor(0,0,0)
+-- 		event.target.source=false
+-- 		statutSelectionSource=true
+-- 		choixSource=""
+-- 	end
+-- 	-- display.getCurrentStage():setFocus(event.target)
+-- 	-- elseif (event.phase == "move" then
 
 
-	elseif (event.phase == "ended" and coupOrdi==true) then
+-- 	elseif (event.phase == "ended" and coupOrdi==true) then
 
-UpdateDisplay();
-	     Jst_Play();
-	     coupOrdi=false;
+-- UpdateDisplay();
+-- 	     Jst_Play();
+-- 	     coupOrdi=false;
 
-	end
-end
+-- 	end
+-- end
 	
 
 local blocs = display.newGroup()
@@ -4881,6 +4876,8 @@ function scene:create( event )
 
 
 	UpdateDisplay();
+
+	--Runtime:addEventListener( "enterFrame", handleComputer )
 	--autosample1();
 
 	--autosample2();
